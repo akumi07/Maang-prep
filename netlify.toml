@@ -1,0 +1,4 @@
+# Netlify publishes only the site/ folder; setup/ (SQL, email templates) stays in the repo but is never served.
+[build]
+  publish = "site"
+  command = ""

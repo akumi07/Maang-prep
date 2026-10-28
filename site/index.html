@@ -1,0 +1,870 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#5b4fe0">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%235b4fe0'/%3E%3Ctext x='16' y='23' font-size='18' font-family='Arial' font-weight='bold' fill='white' text-anchor='middle'%3EM%3C/text%3E%3C/svg%3E">
+<script>try{var t=localStorage.getItem("maang-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<title>MAANG Prep</title>
+<meta name="description" content="MAANG interview prep: lessons, code comprehension mocks and a progress tracker.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: study app. Sticky top bar; left sidebar (tracks > groups > topics, drawer on phones); reader column ~72ch. */
+:root{
+  --bg:#f4f5f8; --surface:#ffffff; --sunk:#eef0f4; --ink:#1b2230; --muted:#5b6476; --line:#dde1e8;
+  --accent:#2f5bd3; --accent-soft:#e5ebfb; --done:#1d8656; --done-soft:#e1f3ea; --warn:#a96300; --warn-soft:#fbf0de;
+  --code-bg:#f1f3f7; --k1:#8a3fb8; --k2:#1f6fb2; --k3:#2c7a3f; --k4:#a3541a; --k5:#6b7280;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10131a; --surface:#171b24; --sunk:#1d222d; --ink:#e6e9f0; --muted:#98a1b3; --line:#2a303c;
+  --accent:#7f9ef6; --accent-soft:#212b45; --done:#4cc28c; --done-soft:#17322a; --warn:#e3a54e; --warn-soft:#3a2c17;
+  --code-bg:#12161e; --k1:#c792ea; --k2:#82aaff; --k3:#a5d6a7; --k4:#f0a868; --k5:#8a93a5; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#10131a; --surface:#171b24; --sunk:#1d222d; --ink:#e6e9f0; --muted:#98a1b3; --line:#2a303c;
+  --accent:#7f9ef6; --accent-soft:#212b45; --done:#4cc28c; --done-soft:#17322a; --warn:#e3a54e; --warn-soft:#3a2c17;
+  --code-bg:#12161e; --k1:#c792ea; --k2:#82aaff; --k3:#a5d6a7; --k4:#f0a868; --k5:#8a93a5; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15.5px;line-height:1.6;margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
+button{font:inherit;color:inherit}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px;
+  display:flex;align-items:center;gap:12px}
+.brand{font-family:var(--display);font-weight:800;font-size:19px;letter-spacing:-.01em;cursor:pointer;white-space:nowrap;background:none;border:0;padding:0}
+.top .search{flex:1;min-width:0;max-width:440px;margin-left:auto}
+.top input{width:100%;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;font-size:14px}
+.sync{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.menu-btn{display:none;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px}
+
+/* shell */
+.shell{display:grid;grid-template-columns:310px minmax(0,1fr);min-height:calc(100% - 56px)}
+aside{border-right:1px solid var(--line);background:var(--surface);position:sticky;top:calc(56px + env(safe-area-inset-top,0px));
+  height:calc(100vh - 56px - env(safe-area-inset-top,0px));overflow-y:auto;padding:14px 10px 40px max(10px,env(safe-area-inset-left,0px))}
+main{min-width:0;overflow-x:clip;padding-block:28px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.page{max-width:780px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+.page>*{min-width:0;max-width:100%}
+
+/* sidebar */
+.nav-track{border-radius:8px}
+.nav-track>button{width:100%;display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center;text-align:left;background:none;border:0;padding:8px 10px;border-radius:8px;cursor:pointer}
+.nav-track>button:hover{background:var(--sunk)}
+.nav-track.active>button{background:var(--accent-soft)}
+.nt-name{font-weight:600;font-size:14.5px}
+.nt-count{font-family:var(--mono);font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.nt-bar{grid-column:1/-1;height:3px;background:var(--line);border-radius:2px;overflow:hidden}
+.nt-bar i{display:block;height:100%;background:var(--done)}
+.nav-groups{padding:2px 0 8px 10px}
+.nav-group{margin-top:6px}
+.nav-group>div{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:6px 8px 2px}
+.nav-topic{display:flex;align-items:flex-start;gap:8px;width:100%;text-align:left;background:none;border:0;padding:5px 8px;border-radius:6px;cursor:pointer;font-size:13.5px;line-height:1.35}
+.nav-topic:hover{background:var(--sunk)}
+.nav-topic.current{background:var(--accent-soft);color:var(--accent);font-weight:500}
+.dot{flex:none;width:12px;height:12px;border-radius:50%;border:1.5px solid var(--line);margin-top:2px}
+.dot.done{background:var(--done);border-color:var(--done)}
+.dot.rev{border-color:var(--warn);background:var(--warn-soft)}
+.dot.done.rev{background:var(--done);border-color:var(--warn)}
+
+/* common */
+h1.title{font-family:var(--display);font-weight:800;font-size:clamp(28px,5vw,40px);line-height:1.08;margin:0;text-wrap:balance;letter-spacing:-.015em}
+.eyebrow{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.eyebrow button{background:none;border:0;padding:0;color:var(--accent);cursor:pointer;font:inherit;letter-spacing:inherit;text-transform:inherit}
+.lead{color:var(--muted);margin:0;max-width:66ch}
+.tag{font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:4px;background:var(--accent-soft);color:var(--accent);white-space:nowrap;letter-spacing:0;text-transform:none}
+.tag.must{background:transparent;border:1px solid var(--warn);color:var(--warn)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px}
+.h2{font-family:var(--display);font-weight:600;font-size:21px;margin:0 0 10px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:500;font-size:14px;display:inline-flex;gap:8px;align-items:center}
+.btn:hover{border-color:var(--accent)}
+.btn.on-done{background:var(--done);border-color:var(--done);color:var(--surface)}
+.btn.on-rev{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* home */
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.stat b{display:block;font-family:var(--display);font-weight:800;font-size:28px;font-variant-numeric:tabular-nums;line-height:1.1}
+.stat span{font-size:12.5px;color:var(--muted)}
+.track-list{display:flex;flex-direction:column;gap:2px}
+.tl-row{display:grid;grid-template-columns:minmax(0,1fr) 72px;gap:4px 14px;align-items:center;padding:10px 4px;border-bottom:1px dashed var(--line);background:none;border-left:0;border-right:0;border-top:0;text-align:left;cursor:pointer;width:100%}
+.tl-row:last-child{border-bottom:0}
+.tl-row:hover .tl-name{color:var(--accent)}
+.tl-name{font-weight:600}
+.tl-why{font-size:13px;color:var(--muted);grid-column:1/2}
+.tl-pct{font-family:var(--mono);font-size:12px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums;grid-row:1/3;grid-column:2}
+.tl-bar{grid-column:1/-1;height:5px;background:var(--line);border-radius:3px;overflow:hidden}
+.tl-bar i{display:block;height:100%;background:var(--done)}
+.mini-list{display:flex;flex-direction:column;gap:4px;margin:0;padding:0;list-style:none}
+.mini-list button{background:none;border:0;padding:4px 0;color:var(--accent);cursor:pointer;text-align:left;font:inherit}
+.mini-list small{color:var(--muted);margin-left:6px}
+.plan{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.wk{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--bg)}
+.wk b{font-family:var(--mono);font-size:12px;color:var(--accent)}
+.wk p{margin:4px 0 0;font-size:13.5px}
+
+/* track page */
+.group-block{display:flex;flex-direction:column;gap:6px}
+.group-block h3{margin:0;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.topic-row{display:flex;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);background:var(--surface);border-radius:8px}
+.topic-row input{width:18px;height:18px;accent-color:var(--done);flex:none;margin:0}
+.topic-row button{flex:1;min-width:0;background:none;border:0;text-align:left;cursor:pointer;padding:0;font:inherit}
+.topic-row button:hover{color:var(--accent)}
+.topic-row .rv{flex:none;font-size:11px;font-family:var(--mono);color:var(--warn)}
+.topic-row.done button{color:var(--muted)}
+
+/* reader */
+.lesson{font-size:16px;line-height:1.7}
+.lesson>*:first-child{margin-top:0}
+.lesson h4{font-family:var(--display);font-weight:600;font-size:20px;margin:34px 0 10px;padding-top:14px;border-top:1px solid var(--line);text-wrap:balance}
+.lesson h5{font-size:15px;margin:20px 0 6px}
+.lesson p,.lesson ul,.lesson ol{margin:0 0 14px;max-width:72ch}
+.lesson li{margin:4px 0}
+.lesson li>p{margin:0 0 6px}
+.lesson strong{font-weight:600}
+.lesson blockquote{margin:0 0 14px;padding:10px 14px;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0}
+.lesson blockquote p:last-child{margin:0}
+.lesson code{font-family:var(--mono);font-size:.88em;background:var(--code-bg);padding:1px 5px;border-radius:4px}
+.lesson p code,.lesson li code,.lesson td code,.lesson summary code,.lesson blockquote code{overflow-wrap:anywhere;word-break:break-word}
+.lesson td{overflow-wrap:anywhere}
+details.qa,.qa-body{min-width:0;max-width:100%}
+.lesson pre{max-width:100%;background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:14px;overflow-x:auto;margin:0 0 16px;font-size:13.2px;line-height:1.55}
+.lesson pre code{background:none;padding:0;font-size:inherit}
+.tbl{overflow-x:auto;margin:0 0 16px;border:1px solid var(--line);border-radius:8px}
+.lesson table{border-collapse:collapse;width:100%;font-size:14px}
+.lesson th,.lesson td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.lesson th{background:var(--sunk);font-weight:600}
+.lesson tr:last-child td{border-bottom:0}
+details.qa{border:1px solid var(--line);border-radius:10px;background:var(--surface);margin:0 0 10px}
+details.qa>summary{cursor:pointer;padding:12px 14px;font-weight:500;list-style:none;display:flex;gap:10px}
+details.qa>summary::-webkit-details-marker{display:none}
+details.qa>summary::before{content:"Q";flex:none;font-family:var(--mono);font-size:11px;background:var(--accent-soft);color:var(--accent);border-radius:4px;padding:2px 6px;height:fit-content;margin-top:2px}
+details.qa[open]>summary{border-bottom:1px dashed var(--line)}
+details.qa .qa-body{padding:12px 14px 2px}
+.sim{background:var(--sunk);border-radius:10px;padding:14px 16px;margin:0 0 14px}
+.lesson .say{display:block;margin:0 0 10px}
+.notes textarea{width:100%;min-height:110px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;font-size:14px;padding:10px;resize:vertical}
+.notes small{color:var(--muted)}
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pager button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:12px;text-align:left;cursor:pointer;min-width:0}
+.pager button:hover{border-color:var(--accent)}
+.pager small{display:block;color:var(--muted);font-size:12px}
+.pager span{display:block;font-weight:500;overflow-wrap:anywhere}
+.pager .next{text-align:right}
+.toc{display:flex;gap:6px;flex-wrap:wrap}
+.toc button{font-size:12.5px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 10px;cursor:pointer}
+.res{display:flex;flex-direction:column;gap:8px}
+.res button{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;text-align:left;cursor:pointer}
+.res button:hover{border-color:var(--accent)}
+.res small{color:var(--muted);display:block;font-size:12px}
+.res mark{background:var(--warn-soft);color:inherit}
+.empty{color:var(--muted);font-size:14px}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.field label{font-weight:600;font-size:14px}
+.field input{max-width:320px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+.field small{color:var(--muted);font-size:12.5px}
+.sync-note{margin:0 0 12px;font-size:13.5px;padding:8px 12px;border-radius:8px;background:var(--sunk)}
+.sync-note.account{background:var(--done-soft)}
+.sync-note.local{background:var(--warn-soft)}
+.backup{width:100%;min-height:90px;margin-top:10px;font:12px var(--mono);border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);padding:8px}
+.flash{position:sticky;top:calc(64px + env(safe-area-inset-top,0px));z-index:5;background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:8px;font-size:14px}
+label.btn{cursor:pointer}
+.learner{display:flex;flex-direction:column;gap:10px}
+.lr-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.lr-head small{color:var(--muted)}
+.lr-pct{font-family:var(--display);font-weight:800;font-size:28px;font-variant-numeric:tabular-nums}
+.lr-meta{margin:0;font-size:14px;color:var(--muted)}
+.lr-meta b{color:var(--ink);font-weight:500}
+.lr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:6px 18px}
+.lr-row{display:grid;grid-template-columns:minmax(0,1fr) 70px 52px;gap:8px;align-items:center;font-size:13px}
+.lr-bar{height:5px;background:var(--line);border-radius:3px;overflow:hidden}
+.lr-bar i{display:block;height:100%;background:var(--done)}
+.lr-num{font-family:var(--mono);font-size:11.5px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+
+/* highlight.js tokens */
+.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-built_in{color:var(--k1)}
+.hljs-title,.hljs-title.class_,.hljs-title.function_,.hljs-type{color:var(--k2)}
+.hljs-string,.hljs-regexp{color:var(--k3)}
+.hljs-number,.hljs-literal,.hljs-attr,.hljs-variable{color:var(--k4)}
+.hljs-comment,.hljs-meta{color:var(--k5);font-style:italic}
+
+@media (max-width:860px){
+  .shell{grid-template-columns:minmax(0,1fr)}
+  aside{position:fixed;top:calc(56px + env(safe-area-inset-top,0px));left:0;bottom:0;height:auto;width:min(340px,88vw);z-index:15;transform:translateX(-105%);transition:transform .2s;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+  aside.open{transform:none}
+  .menu-btn{display:inline-block}
+  .sync{display:none}
+  .brand{font-size:17px}
+}
+@media (prefers-reduced-motion:reduce){aside{transition:none}}
+/* ===== web design layer: blue-violet palette, track colours, light/dark, gentle motion ===== */
+:root{
+  --bg:#f6f6fb; --surface:#ffffff; --sunk:#f0f0f7; --ink:#1a1b2e; --muted:#5f6380; --line:#e4e4f0;
+  --accent:#5b4fe0; --accent-soft:#eeedfd; --done:#12a06a; --done-soft:#e2f6ed; --warn:#c26800; --warn-soft:#fff2df;
+  --pink:#e0518f; --teal:#13a3a3; --grad:linear-gradient(120deg,#5b4fe0 0%,#8b4fe0 45%,#e0518f 100%);
+  --shadow:0 1px 2px rgba(26,27,46,.04),0 4px 14px rgba(26,27,46,.05); --shadow-hi:0 6px 22px rgba(91,79,224,.16);
+  --glow:rgba(91,79,224,.10); --code-bg:#f3f3f9;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d0e19; --surface:#151729; --sunk:#1b1e34; --ink:#e9e9f6; --muted:#a0a3c2; --line:#272a44;
+  --accent:#a29bff; --accent-soft:#25234b; --done:#3fd090; --done-soft:#123427; --warn:#f2ab52; --warn-soft:#3a2a15;
+  --pink:#ff7ab1; --teal:#3dd6d0; --grad:linear-gradient(120deg,#7d72ff 0%,#a96bff 45%,#ff6fa8 100%);
+  --shadow:0 1px 2px rgba(0,0,0,.3); --shadow-hi:0 6px 24px rgba(125,114,255,.22); --glow:rgba(125,114,255,.14); --code-bg:#11132a;}}
+:root[data-theme="dark"]{
+  --bg:#0d0e19; --surface:#151729; --sunk:#1b1e34; --ink:#e9e9f6; --muted:#a0a3c2; --line:#272a44;
+  --accent:#a29bff; --accent-soft:#25234b; --done:#3fd090; --done-soft:#123427; --warn:#f2ab52; --warn-soft:#3a2a15;
+  --pink:#ff7ab1; --teal:#3dd6d0; --grad:linear-gradient(120deg,#7d72ff 0%,#a96bff 45%,#ff6fa8 100%);
+  --shadow:0 1px 2px rgba(0,0,0,.3); --shadow-hi:0 6px 24px rgba(125,114,255,.22); --glow:rgba(125,114,255,.14); --code-bg:#11132a; color-scheme:dark}
+:root[data-theme="light"]{color-scheme:light}
+body{background:radial-gradient(900px 420px at 0% -8%,var(--glow),transparent 70%),radial-gradient(700px 360px at 100% 0%,rgba(224,81,143,.07),transparent 70%),var(--bg);background-attachment:fixed;transition:background-color .25s,color .25s}
+.top{background:color-mix(in srgb,var(--surface) 86%,transparent);backdrop-filter:saturate(1.4) blur(10px);-webkit-backdrop-filter:saturate(1.4) blur(10px)}
+.brand{display:inline-flex;align-items:center;gap:8px}
+.brand::before{content:"M";display:inline-grid;place-items:center;width:28px;height:28px;border-radius:8px;background:var(--grad);color:#fff;font-size:15px;box-shadow:var(--shadow-hi)}
+.brand span{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.icon-btn{flex:none;width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--surface);cursor:pointer;display:grid;place-items:center;font-size:16px;transition:transform .15s,border-color .15s}
+.icon-btn:hover{border-color:var(--accent);transform:rotate(-12deg)}
+.icon-btn .sun{display:none}.icon-btn[data-mode="dark"] .sun{display:inline}.icon-btn[data-mode="dark"] .moon{display:none}
+.online{flex:none;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;padding:5px 10px;border-radius:999px;background:var(--done-soft);color:var(--done);white-space:nowrap}
+.online[hidden]{display:none}
+.online i,.live-dot::before{width:8px;height:8px;border-radius:50%;background:var(--done);display:inline-block;box-shadow:0 0 0 0 var(--done);animation:pulse 2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--done) 55%,transparent)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.card{border-color:var(--line);box-shadow:var(--shadow);border-radius:14px}
+.stat{border-radius:14px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.stat::after{content:"";position:absolute;inset:0 0 auto;height:3px;background:var(--grad)}
+.stat:nth-child(2)::after{background:linear-gradient(90deg,var(--done),var(--teal))}
+.stat:nth-child(3)::after{background:linear-gradient(90deg,var(--warn),var(--pink))}
+.ring-stat{display:flex;align-items:center;gap:12px}
+.ring{--p:0;flex:none;width:58px;height:58px;border-radius:50%;background:conic-gradient(var(--accent) calc(var(--p)*1%),var(--line) 0);display:grid;place-items:center;transition:--p .6s}
+.ring::before{content:"";grid-area:1/1;width:44px;height:44px;border-radius:50%;background:var(--surface)}
+.ring em{grid-area:1/1;font-style:normal;font-family:var(--mono);font-size:12px;font-weight:500;position:relative}
+.hello{background:var(--grad);color:#fff;border-radius:18px;padding:22px 22px 20px;box-shadow:var(--shadow-hi);position:relative;overflow:hidden}
+.hello::after{content:"";position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.12)}
+.hello .eyebrow{color:rgba(255,255,255,.85)}
+.hello h1.title{color:#fff}
+.hello .lead{color:rgba(255,255,255,.9)}
+.btn{border-radius:10px;transition:border-color .15s,transform .12s,background-color .15s,box-shadow .15s}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+.btn:active{transform:translateY(0) scale(.98)}
+.btn.on-done{animation:pop .35s ease}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.08)}100%{transform:scale(1)}}
+.btn.primary{background:var(--grad);border:0;color:#fff;font-weight:600;width:100%;justify-content:center;padding:12px 14px;font-size:15px;box-shadow:var(--shadow-hi)}
+.btn.primary:disabled{opacity:.7;cursor:wait}
+.btn.primary.busy{background-size:200% 100%;animation:shimmer 1s linear infinite}
+@keyframes shimmer{to{background-position:-200% 0}}
+.nav-track>button{border-left:3px solid transparent}
+.nav-track.active>button{border-left-color:var(--tc,var(--accent));background:color-mix(in srgb,var(--tc,var(--accent)) 12%,transparent)}
+.nt-name::before,.tl-name::before{content:"";display:inline-block;width:8px;height:8px;border-radius:3px;background:var(--tc,var(--accent));margin-right:8px;vertical-align:1px}
+.nt-bar i,.tl-bar i{background:var(--tc,var(--done));transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.tl-row{border-radius:10px;padding:10px 8px;transition:background-color .15s}
+.tl-row:hover{background:color-mix(in srgb,var(--tc,var(--accent)) 8%,transparent)}
+.tl-row:hover .tl-name{color:var(--tc,var(--accent))}
+.lr-bar i{background:var(--grad)}
+.dot.done{background:var(--done);border-color:var(--done)}
+.topic-row{border-radius:10px;transition:border-color .15s,transform .12s}
+.topic-row:hover{border-color:var(--accent);transform:translateX(2px)}
+details.qa{transition:border-color .15s,box-shadow .15s}
+details.qa:hover{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+details.qa[open]{box-shadow:var(--shadow)}
+.res button,.pager button{transition:border-color .15s,transform .12s}
+.res button:hover,.pager button:hover{transform:translateY(-1px)}
+.page{animation:fadeUp .28s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.flash{background:var(--grad);color:#fff;box-shadow:var(--shadow-hi);animation:fadeUp .2s ease both}
+.lesson blockquote{border-left-color:var(--accent)}
+.live-dot{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--done);font-weight:500;margin-left:8px}
+.online-list{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none}
+.online-list li{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:var(--sunk);font-size:14px;min-width:0}
+.online-list li b{font-weight:600;white-space:nowrap}
+.online-list li small{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.avatar{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:600;font-size:13px;background:var(--grad)}
+/* auth screen */
+#auth{position:fixed;inset:0;z-index:100;background:radial-gradient(800px 400px at 10% 0%,var(--glow),transparent 70%),var(--bg);overflow-y:auto;display:flex;align-items:center;justify-content:center;padding:32px 16px}
+#auth[hidden]{display:none}
+body.locked{overflow:hidden}
+.auth-wrap{width:100%;max-width:880px;display:grid;grid-template-columns:1fr 1fr;border-radius:22px;overflow:hidden;box-shadow:0 20px 60px rgba(20,20,60,.18);background:var(--surface);border:1px solid var(--line);animation:fadeUp .3s ease both}
+.auth-side{background:var(--grad);color:#fff;padding:40px 34px;display:flex;flex-direction:column;justify-content:flex-end;gap:12px;position:relative;overflow:hidden;min-height:460px}
+.auth-side::before{content:"";position:absolute;width:300px;height:300px;border-radius:50%;background:rgba(255,255,255,.12);top:-90px;right:-90px}
+.auth-side::after{content:"";position:absolute;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.08);bottom:120px;left:-70px}
+.auth-logo{width:52px;height:52px;border-radius:14px;background:rgba(255,255,255,.2);display:grid;place-items:center;font:800 26px var(--display);margin-bottom:auto;position:relative}
+.auth-side h2{font:800 34px/1.05 var(--display);margin:0;letter-spacing:-.02em;position:relative}
+.auth-side p{margin:0;opacity:.9;position:relative}
+.auth-chips{display:flex;flex-wrap:wrap;gap:6px;position:relative}
+.auth-chips span{font-size:12px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.18)}
+.auth-card{padding:30px 28px;display:flex;flex-direction:column;min-width:0}
+.auth-wrap>.auth-card:only-child{grid-column:1/-1;max-width:440px;justify-self:center}
+.auth-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.brand-lg{font:800 16px var(--display);background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.auth-title{font:800 26px/1.15 var(--display);margin:0 0 6px;letter-spacing:-.015em}
+.auth-sub{margin-bottom:18px;font-size:14.5px}
+.auth-card .field input{max-width:none;width:100%;padding:11px 12px;border-radius:10px;font-size:15px;transition:border-color .15s,box-shadow .15s}
+.auth-card .field input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
+.otp{font-family:var(--mono)!important;font-size:26px!important;letter-spacing:.5em;text-align:center;padding-left:.5em!important}
+.pw{position:relative}
+.pw input{padding-right:64px!important}
+.pw-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:var(--sunk);border:0;border-radius:7px;padding:5px 9px;font-size:12px;cursor:pointer;color:var(--muted)}
+.auth-row{display:flex;justify-content:flex-end;margin:-4px 0 12px}
+.link{background:none;border:0;padding:0;color:var(--accent);cursor:pointer;font:inherit;font-size:14px;font-weight:500}
+.link:hover{text-decoration:underline}
+.link:disabled{color:var(--muted);cursor:default;text-decoration:none}
+.auth-links{display:flex;flex-direction:column;gap:8px;margin-top:16px;align-items:center;font-size:14px;color:var(--muted);text-align:center}
+.auth-msg{font-size:14px;padding:10px 12px;border-radius:10px;margin:0 0 14px;animation:fadeUp .2s ease both}
+.auth-msg.err{background:var(--warn-soft);color:var(--warn)}
+.auth-msg.ok{background:var(--done-soft);color:var(--done)}
+.lr-email{color:var(--muted);font-size:12.5px;overflow-wrap:anywhere}
+@media (max-width:760px){.auth-wrap{grid-template-columns:1fr;max-width:440px}.auth-side{display:none}.auth-card{padding:26px 20px}#auth{align-items:flex-start;padding-top:40px}}
+@media (max-width:860px){.online{padding:5px 8px}.online span{display:none}.top{gap:8px}.icon-btn{width:34px;height:34px}}
+@media (max-width:420px){.brand span{display:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.hello h1.title{margin:2px 0 8px}
+@media (max-width:560px){
+  .stat-row{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .stat{padding:12px 10px}
+  .stat b{font-size:22px}
+  .ring-stat{flex-direction:column;align-items:flex-start;gap:6px}
+  .ring{width:44px;height:44px}.ring::before{width:33px;height:33px}.ring em{font-size:10.5px}
+  .ring-stat span br{display:none}
+  .hello{padding:18px}
+  .hello .lead{font-size:14.5px}
+}
+
+</style>
+</head>
+<body>
+<header class="top">
+  <button class="menu-btn" id="menuBtn" aria-label="Show topics" aria-expanded="false">Topics</button>
+  <button class="brand" id="brand"><span>MAANG Prep</span></button>
+  <div class="search"><input type="search" id="q" placeholder="Search all lessons (e.g. volatile, Saga, idempotency)" aria-label="Search all lessons"></div>
+  <span class="online" id="online" hidden title="People studying right now"><i></i><b>1</b><span>&nbsp;online</span></span>
+  <span class="sync" id="sync">Loading…</span>
+  <button class="icon-btn" id="themeBtn" aria-label="Toggle theme"><span class="sun">☀️</span><span class="moon">🌙</span></button>
+</header>
+<div class="shell">
+  <aside id="side" aria-label="Topics"></aside>
+  <main><div class="page" id="view"><p class="empty">Loading lessons…</p></div></main>
+</div>
+
+<div id="auth" hidden></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+/* ---------- track manifest ---------- */
+const TC={dsa:"#f97316",java:"#e0518f",spring:"#16a34a",cs:"#0ea5e9",lld:"#8b5cf6",hld:"#5b4fe0",cc:"#0d9488",cloud:"#3b82f6",ai:"#d946ef",beh:"#d97706"};
+const TRACKS=[
+ {id:"dsa",name:"DSA",why:"Checklist only. Round 1–2 filter everywhere. Target: medium in 25 min, hard in 45, talking throughout.",checklist:true},
+ {id:"java",name:"Core Java",why:"Your primary language. Expect deep follow-ups on internals.",files:["java-1.md","java-2.md","java-3.md"]},
+ {id:"spring",name:"Spring Boot & Backend",why:"Production depth. Tie every answer to a real project you have built.",files:["spring-1.md","spring-2.md"]},
+ {id:"cs",name:"CS Fundamentals",why:"Rapid-fire or dedicated round. Know the why, not just definitions.",files:["cs-1.md","cs-2.md","cs-3.md"]},
+ {id:"lld",name:"Low-Level Design",why:"Machine-coding / LLD round: working, extensible, thread-safe code in ~90 min.",files:["lld-1.md","lld-2.md","lld-3.md","lld-4.md"]},
+ {id:"hld",name:"High-Level Design",why:"Decides SDE-2 vs SDE-1 leveling. Drive the discussion and talk trade-offs.",files:["hld-1.md","hld-2.md","hld-3.md","hld-4.md","hld-5.md","hld-6.md"]},
+ {id:"cc",name:"Code Comprehension",why:"New AI-assisted round at Google and Meta: read an unfamiliar codebase, debug, extend, optimize.",files:["cc-1.md","cc-2.md","cc-3.md","cc-4.md"]},
+ {id:"cloud",name:"Cloud & DevOps",why:"Production readiness. Comes up inside HLD and project deep-dives.",files:["cloud-1.md"]},
+ {id:"ai",name:"AI / LLM Engineering",why:"Your differentiator. GenAI system design is now common.",files:["ai-1.md"]},
+ {id:"beh",name:"Behavioral & Job Search",why:"Strong coders get rejected here. Treat it like a technical topic.",files:["beh-1.md"]}
+];
+const DSA=[
+ ["Arrays & hashing","P1",1,["Prefix sums and difference arrays","Kadane's algorithm (max subarray)","Dutch national flag / sort 0-1-2","Moore's voting (majority element)","Subarray sum equals K (prefix + hashmap)","Longest consecutive sequence","Next permutation","Merge and insert intervals","Rotate / spiral / set-zero matrix","Product of array except self"]],
+ ["Two pointers & sliding window","P1",1,["Opposite-end two pointers (2Sum sorted, 3Sum, container with most water)","Fixed-size window","Variable window (longest substring without repeat)","'At most K' trick for exactly-K counting","Minimum window substring","Fruits into baskets / longest repeating replacement"]],
+ ["Binary search","P1",1,["Lower / upper bound, first & last occurrence","Rotated sorted array (search, min)","Peak element, search in 2D matrix","Binary search on answer (Koko, ship packages, split array)","Aggressive cows / book allocation","Median of two sorted arrays","Kth element in sorted matrix"]],
+ ["Strings","P1",0,["Palindromes (expand around center)","Anagram / frequency-map problems","String hashing & Rabin-Karp","KMP (LPS array)","Z-algorithm","Longest common prefix, string compression","Manacher (optional)"]],
+ ["Linked list","P1",1,["Reverse (iterative and recursive)","Fast/slow pointers, cycle detection & start (Floyd)","Merge two / K sorted lists","Remove Nth from end, middle node","Reverse in K-groups","Copy list with random pointer","Add two numbers, palindrome list, intersection point"]],
+ ["Stack, queue, monotonic structures","P1",1,["Valid parentheses, min stack","Monotonic stack: next greater/smaller element","Largest rectangle in histogram, maximal rectangle","Trapping rain water (stack and two-pointer)","Monotonic deque: sliding window maximum","Queue using stacks and vice versa","Asteroid collision, stock span, sum of subarray minimums"]],
+ ["Recursion & backtracking","P1",1,["Subsets I/II, permutations I/II","Combination sum I/II/III","N-Queens, Sudoku solver","Word search, rat in a maze","Palindrome partitioning","Generate parentheses, letter combinations"]],
+ ["Trees","P1",1,["Iterative pre/in/post order","Level order, zigzag, right/left/top/bottom views","Height, diameter, balanced check","Max path sum","LCA of binary tree","Construct from inorder + pre/postorder","Serialize / deserialize","Vertical order traversal, boundary traversal","Nodes at distance K, burn tree","Morris traversal"]],
+ ["Binary search tree","P1",1,["Insert, delete, search","Validate BST","Kth smallest/largest","Floor / ceil, predecessor / successor","LCA in BST","BST iterator, two-sum in BST","Recover BST, largest BST in binary tree"]],
+ ["Heaps / priority queue","P2",1,["Implement a min-heap (heapify, sift up/down)","Top-K frequent / K closest points","Merge K sorted lists/arrays","Median from data stream (two heaps)","Task scheduler, reorganize string","Kth largest in stream","IPO / maximize capital"]],
+ ["Graphs","P2",1,["Adjacency list vs matrix; BFS and DFS","Connected components, number of islands, flood fill","Cycle detection: undirected (BFS/DFS/DSU) and directed (DFS colors)","Topological sort: DFS and Kahn's; course schedule","Bipartite check","Multi-source BFS (rotting oranges, 01-matrix)","Shortest path: BFS on unit weights, 0-1 BFS","Dijkstra (with PQ), path with minimum effort","Bellman-Ford (negative edges, cheapest flights with K stops)","Floyd-Warshall","Disjoint Set Union with path compression + union by rank","MST: Kruskal and Prim","Accounts merge, number of provinces, making a large island","Strongly connected components (Kosaraju / Tarjan)","Bridges and articulation points","Word ladder I/II, alien dictionary"]],
+ ["Dynamic programming","P2",1,["Memoization → tabulation → space optimization","1D: climbing stairs, house robber I/II, frog jump","2D grid: unique paths, min path sum, triangle, cherry pickup","0/1 knapsack, subset sum, partition equal subset, target sum","Unbounded knapsack: coin change I/II, rod cutting","Strings: LCS, longest palindromic subsequence, edit distance","Wildcard and regex matching, distinct subsequences","LIS (O(n²) and O(n log n)), Russian doll envelopes","Stock buy/sell I–IV, with cooldown and fee","Partition / MCM: burst balloons, palindrome partitioning II","DP on trees (house robber III, max path)","Bitmask DP (TSP, assign tasks)","Digit DP basics"]],
+ ["Greedy","P2",0,["Activity / interval scheduling, non-overlapping intervals","Jump game I/II","Gas station, candy","Minimum platforms / meeting rooms","Fractional knapsack, job sequencing"]],
+ ["Trie","P2",0,["Insert / search / startsWith","Word search II","Maximum XOR of two numbers","Autocomplete / search suggestions","Count distinct substrings"]],
+ ["Bit manipulation & math","P2",0,["AND/OR/XOR tricks, set/clear/toggle bit","Single number I/II/III","Count set bits, power of two","Subsets via bitmask","GCD/LCM, sieve of Eratosthenes","Fast modular exponentiation, nCr mod p"]],
+ ["Advanced (top-tier rounds)","P3",0,["Segment tree: point update, range query","Segment tree with lazy propagation","Fenwick tree (BIT)","Sparse table for RMQ","Design LRU and LFU cache","Sweep line problems"]],
+ ["Practice system","P1",1,["Finish one sheet: Striver A2Z or NeetCode 150/250","Revise with a mistake log (problem, wrong idea, fix)","Weekly + biweekly LeetCode contests","Company-tagged lists for each target company (last 6 months)","Reach contest rating 1900+","Timed mock interviews (at least 8)"]]
+];
+const PLAN=[
+ ["Wk 1–2","P1","Finish trees + BST. Arrays, two pointers, binary search revision. Java OOP + collections internals."],
+ ["Wk 3–4","P1","Linked list, stacks, backtracking revision. HashMap/ConcurrentHashMap deep dive. Start weekly contests."],
+ ["Wk 5–6","P2","Heaps + graphs. Java concurrency. OS fundamentals. SOLID + creational patterns."],
+ ["Wk 7–8","P2","DP (the big block). JVM + GC. DBMS + SQL. Structural/behavioral patterns. Code comprehension weeks 1–2."],
+ ["Wk 9","P2","DP + greedy + tries. Spring internals, transactions. Networks. Code comprehension weeks 3–4."],
+ ["Wk 10","P3","HLD framework + building blocks. LLD problems 1–5. Start applying with referrals."],
+ ["Wk 11–12","P3","Distributed systems, Kafka, Redis. LLD problems 6–14. HLD problems 1–6."],
+ ["Wk 13–14","P3","HLD problems 7–19. Remaining LLD. Advanced DSA. Security + resilience."],
+ ["Wk 15","P4","Cloud/K8s, AI/LLM topics. Project deep-dive prep, STAR stories."],
+ ["Wk 16+","P4","Mocks every other day. Company-tagged problems. Revise everything marked for revision."]
+];
+
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const slug=s=>s.toLowerCase().replace(/[`'’"]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,60);
+
+/* ---------- content parsing ---------- */
+// File format: "## Group | P1 | must", "### Topic", body with "#### Section" and "?? Question" reveal blocks.
+function parseFile(text,trackId,groups,seen){
+  const lines=text.replace(/\r/g,"").split("\n");
+  let g=null,t=null,fence=false;
+  for(const ln of lines){
+    if(/^\s*(```|~~~)/.test(ln)) fence=!fence;
+    if(!fence && ln.startsWith("## ")){
+      const parts=ln.slice(3).split("|").map(s=>s.trim());
+      g={name:parts[0],phase:parts[1]||"",must:(parts[2]||"")==="must",topics:[]};groups.push(g);t=null;continue;
+    }
+    if(!fence && ln.startsWith("### ")){
+      if(!g){g={name:"Topics",phase:"",must:false,topics:[]};groups.push(g)}
+      const title=ln.slice(4).trim();let id=trackId+"-"+slug(title);while(seen.has(id))id+="-x";seen.add(id);
+      t={id,title,track:trackId,group:g,body:[]};g.topics.push(t);continue;
+    }
+    if(t) t.body.push(ln);
+  }
+}
+function buildChecklist(){
+  return DSA.map((g,gi)=>({name:g[0],phase:g[1],must:!!g[2],topics:g[3].map((x,ii)=>({id:`dsa-${gi}-${ii}`,title:x,track:"dsa",checklist:true}))}));
+}
+const BY_ID=new Map(); let ORDER=[];
+function indexAll(){
+  BY_ID.clear();ORDER=[];
+  for(const tr of TRACKS){ if(!tr.groups) continue;
+    for(const g of tr.groups) for(const t of g.topics){ t.group=g; BY_ID.set(t.id,t); if(!t.checklist) ORDER.push(t); } }
+}
+function renderMarkdown(lines){
+  // split into normal chunks and ?? Q&A blocks
+  let html="",buf=[],qa=null,fence=false;
+  const marked=window.marked||{parse:t=>`<pre style="white-space:pre-wrap">${esc(t)}</pre>`,parseInline:t=>esc(t)};   // offline fallback
+  const flush=()=>{ if(qa){ html+=`<details class="qa"><summary>${marked.parseInline(qa.q)}</summary><div class="qa-body">${marked.parse(qa.a.join("\n"))}</div></details>`; qa=null; }
+                    else if(buf.length){ html+=marked.parse(buf.join("\n")); } buf=[]; };
+  for(const ln of lines){
+    if(/^\s*(```|~~~)/.test(ln)) fence=!fence;
+    if(!fence && ln.startsWith("?? ")){ flush(); qa={q:ln.slice(3).trim(),a:[]}; continue; }
+    if(!fence && ln.startsWith("#### ")){ flush(); buf.push(ln); continue; }
+    if(qa) qa.a.push(ln); else buf.push(ln);
+  }
+  flush(); return html;
+}
+
+/* ---------- progress state (Supabase) ----------
+   Each person's progress is one row in public.progress (user_id = their account).
+   Row-level security: each person reads/writes only their own row; admins (public.admins) can read every row.
+   Browser storage is a per-account local mirror. */
+const CFG=window.SITE_CONFIG||{};
+const sb=(window.supabase&&CFG.supabaseUrl)?window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseKey):null;
+let LKEY="maang-study-v2";
+let S={done:{},revise:{},notes:{},last:"",name:"",updatedAt:0};
+let uid=null,userEmail="",docRef=null,isOwnerFlag=false,syncMode="loading",saveTimer=null,saving=false,dirty=false;
+let LEARNERS=null; const PROFILES={};
+function normalize(r){ r=r||{}; return {done:r.done||{},revise:r.revise||{},notes:r.notes||{},last:r.last||"",name:r.name||"",updatedAt:r.updatedAt||0}; }
+function loadLocal(){ try{const v=JSON.parse(localStorage.getItem(LKEY)||"null"); if(v) S=normalize(Object.assign({},S,v));}catch(e){} }
+function saveLocal(){ if(!uid) return; try{localStorage.setItem(LKEY,JSON.stringify(S))}catch(e){} }
+function setSync(t){$("#sync").textContent=t}
+function persist(){
+  S.updatedAt=Date.now(); saveLocal(); dirty=true;
+  if(!docRef) return;
+  clearTimeout(saveTimer); saveTimer=setTimeout(flushRemote,900);
+}
+let retryMs=2000;
+async function flushRemote(){
+  if(!docRef||saving||!dirty) return;
+  saving=true; dirty=false; setSync("Saving…");
+  try{ await docRef.set(JSON.parse(JSON.stringify(S))); setSync("Saved to your account"); retryMs=2000; }
+  catch(e){ dirty=true; setSync("Offline: will retry"); setTimeout(flushRemote,retryMs); retryMs=Math.min(retryMs*2,60000); }
+  saving=false; if(dirty&&docRef&&retryMs===2000) flushRemote();
+}
+function rowRef(id){
+  return {
+    async get(){ const {data,error}=await sb.from("progress").select("name,data").eq("user_id",id).maybeSingle(); if(error) throw error;
+      return data?normalize(Object.assign({},data.data,{name:data.name||(data.data&&data.data.name)||""})):null; },
+    async set(obj){ const {error}=await sb.from("progress").upsert({user_id:id,name:obj.name||"",data:obj},{onConflict:"user_id"}); if(error) throw error; }
+  };
+}
+async function startSession(session){
+  uid=session.user.id; userEmail=session.user.email||"";
+  LKEY="maang-study-v2:"+uid; S={done:{},revise:{},notes:{},last:"",name:"",updatedAt:0}; loadLocal();
+  hideAuth(); setSync("Loading…"); render();
+  docRef=rowRef(uid);
+  try{
+    const remote=await docRef.get();
+    if(!remote){ if(!S.name) S.name=(userEmail.split("@")[0]||""); S.updatedAt=Date.now(); saveLocal(); dirty=true; await flushRemote(); }
+    else if((S.updatedAt||0)>(remote.updatedAt||0)){                                         // this browser has newer edits: merge, never lose ticks
+      S.done=Object.assign({},remote.done,S.done); S.revise=Object.assign({},remote.revise,S.revise);
+      S.notes=Object.assign({},remote.notes,S.notes); S.name=S.name||remote.name; S.last=S.last||remote.last;
+      saveLocal(); dirty=true; await flushRemote(); }
+    else { S=remote; saveLocal(); }                                                           // account copy is newest
+    syncMode="account"; setSync("Saved to your account");
+  }catch(e){ syncMode="account"; setSync("Offline: will retry"); dirty=true; setTimeout(flushRemote,retryMs); }
+  try{ const {data}=await sb.rpc("is_admin"); isOwnerFlag=data===true; }catch(e){ isOwnerFlag=false; }
+  if(isOwnerFlag) loadLearners();
+  render();
+}
+async function refreshFromServer(){                                                          // pick up edits made on your other devices
+  if(!docRef||dirty||saving) return;
+  try{ const r=await docRef.get(); if(r&&r.updatedAt>(S.updatedAt||0)){ S=r; saveLocal();
+    if(!(document.activeElement&&["note","nick"].includes(document.activeElement.id))){const y=scrollY;render();scrollTo(0,y);} } }catch(e){}
+  if(isOwnerFlag) loadLearners();
+}
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") refreshFromServer(); else if(dirty) flushRemote(); });
+async function loadLearners(){
+  try{ const {data,error}=await sb.from("progress").select("user_id,email,name,data,updated_at").order("updated_at",{ascending:false}); if(error) throw error;
+    LEARNERS=(data||[]).map(r=>Object.assign(normalize(r.data),{id:r.user_id,email:r.email||"",name:r.name||(r.data&&r.data.name)||"",updatedAt:(r.data&&r.data.updatedAt)||Date.parse(r.updated_at)||0}));
+    if(current.view==="learners"||current.view==="home"){ const y=scrollY; render(); scrollTo(0,y); }
+  }catch(e){ if(!LEARNERS) LEARNERS=[]; }
+}
+async function signOut(){ if(dirty) await flushRemote(); try{ await sb.auth.signOut(); }catch(e){} location.hash=""; location.reload(); }
+
+/* ---------- live presence: who's on the site right now ----------
+   Each signed-in tab joins one Realtime presence channel keyed by the user's id (an opaque uuid),
+   sharing only the lesson id they're on. Everyone sees the count; admins map ids to names via the progress rows. */
+let presenceCh=null, ONLINE={};
+function startPresence(){
+  if(!sb||presenceCh) return;
+  presenceCh=sb.channel("online-now",{config:{presence:{key:uid}}});
+  presenceCh.on("presence",{event:"sync"},()=>{
+    const st=presenceCh.presenceState(); ONLINE={};
+    for(const k in st){ const metas=st[k]||[]; const m=metas[metas.length-1]||{}; ONLINE[k]={page:m.page||"",at:m.at||0}; }
+    paintOnline();
+  });
+  presenceCh.subscribe(s=>{ if(s==="SUBSCRIBED") trackPresence(); });
+}
+let presTimer=null;
+function trackPresence(){ if(!presenceCh) return; clearTimeout(presTimer);
+  presTimer=setTimeout(()=>{ try{ presenceCh.track({page:current.view==="topic"?current.id:"",at:Date.now()}); }catch(e){} },400); }
+function onlineCount(){ return Math.max(Object.keys(ONLINE).length, uid?1:0); }
+function paintOnline(){
+  const el=$("#online"); if(el){ const n=onlineCount(); el.hidden=!uid; el.querySelector("b").textContent=n; el.title=n+(n===1?" person":" people")+" studying right now"; }
+  if(isOwnerFlag&&(current.view==="learners"||current.view==="home")){ const y=scrollY; render(); scrollTo(0,y); }
+}
+let progressFeed=null;
+function watchProgressLive(){                                                                // admin: refresh the users list when anyone's progress changes
+  if(!sb||progressFeed) return; let t=null;
+  progressFeed=sb.channel("progress-feed").on("postgres_changes",{event:"*",schema:"public",table:"progress"},()=>{ clearTimeout(t); t=setTimeout(loadLearners,1500); }).subscribe();
+}
+
+/* ---------- theme ---------- */
+function applyTheme(t){ const r=document.documentElement; if(t==="light"||t==="dark") r.setAttribute("data-theme",t); else r.removeAttribute("data-theme"); }
+function currentTheme(){ const t=document.documentElement.getAttribute("data-theme"); if(t) return t; return matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"; }
+try{ applyTheme(localStorage.getItem("maang-theme")); }catch(e){}
+function toggleTheme(){ const n=currentTheme()==="dark"?"light":"dark"; applyTheme(n); try{localStorage.setItem("maang-theme",n)}catch(e){} paintThemeBtn(); }
+function paintThemeBtn(){ const b=$("#themeBtn"); if(!b) return; const d=currentTheme()==="dark"; b.setAttribute("aria-label",d?"Switch to light mode":"Switch to dark mode"); b.dataset.mode=d?"dark":"light"; }
+document.addEventListener("click",e=>{ if(e.target.closest("#themeBtn")) toggleTheme(); });
+
+/* ---------- sign-in, sign-up and password reset with emailed codes ---------- */
+let authMode="signin", authEmail="", otpFor="", inRecovery=false, resendAt=0, resendTimer=null;
+const AUTH_TEXT={
+  signin:{t:"Welcome back",s:"Sign in to continue your prep.",b:"Sign in"},
+  signup:{t:"Create your account",s:"Your progress, notes and revise list sync across all your devices.",b:"Create account"},
+  forgot:{t:"Forgot your password?",s:"Enter your email and we'll send you a 6-digit code.",b:"Send code"},
+  otp:{t:"Check your email",s:"",b:"Verify"},
+  newpass:{t:"Set a new password",s:"Choose a new password for your account.",b:"Save password"}
+};
+function showAuth(msg,kind){
+  const a=$("#auth"); a.hidden=false; document.body.classList.add("locked");
+  const T=AUTH_TEXT[authMode];
+  const sub=authMode==="otp"?`We sent a code to <b>${esc(authEmail)}</b>. Enter it below to ${otpFor==="signup"?"finish creating your account":"reset your password"}.`:esc(T.s);
+  a.innerHTML=`<div class="auth-wrap"><div class="auth-side" aria-hidden="true"><div class="auth-logo">M</div><h2>Crack the loop.</h2><p>Java · Spring · LLD · HLD · Code comprehension · 33 full mocks</p><div class="auth-chips"><span>Track progress</span><span>Revise lists</span><span>Mock interviews</span></div></div>
+   <form class="auth-card" id="authForm" novalidate>
+    <div class="auth-top"><span class="brand-lg">MAANG Prep</span><button type="button" class="icon-btn" id="themeBtn" aria-label="Toggle theme"><span class="sun">☀️</span><span class="moon">🌙</span></button></div>
+    <h1 class="auth-title">${T.t}</h1><p class="lead auth-sub">${sub}</p>
+    ${authMode==="signup"?`<div class="field"><label for="aName">Your name</label><input id="aName" autocomplete="name" maxlength="40" placeholder="e.g. Akash"></div>`:""}
+    ${["signin","signup","forgot"].includes(authMode)?`<div class="field"><label for="aEmail">Email</label><input id="aEmail" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" value="${esc(authEmail)}"></div>`:""}
+    ${authMode==="otp"?`<div class="field"><label for="aCode">6-digit code</label><input id="aCode" class="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="••••••"><small>The code expires in a few minutes. Check spam if you don't see it.</small></div>`:""}
+    ${["signin","signup","newpass"].includes(authMode)?`<div class="field"><label for="aPass">${authMode==="newpass"?"New password":"Password"}</label><div class="pw"><input id="aPass" type="password" minlength="8" autocomplete="${authMode==="signin"?"current-password":"new-password"}" placeholder="${authMode==="signin"?"Your password":"At least 8 characters"}"><button type="button" class="pw-eye" data-eye aria-label="Show password">Show</button></div></div>`:""}
+    ${authMode==="signin"?`<div class="auth-row"><button type="button" class="link" data-auth="forgot">Forgot password?</button></div>`:""}
+    <p class="auth-msg ${kind||"err"}" id="authMsg" role="alert" ${msg?"":"hidden"}>${esc(msg||"")}</p>
+    <button class="btn primary" type="submit" id="aGo">${T.b}</button>
+    <div class="auth-links">
+      ${authMode==="signin"?`<span>New here? <button type="button" class="link" data-auth="signup">Create an account</button></span>`:""}
+      ${authMode==="signup"?`<span>Already have an account? <button type="button" class="link" data-auth="signin">Sign in</button></span>`:""}
+      ${authMode==="forgot"?`<button type="button" class="link" data-auth="signin">← Back to sign in</button>`:""}
+      ${authMode==="otp"?`<span>Didn't get it? <button type="button" class="link" id="resendBtn" data-resend>Resend code</button></span><button type="button" class="link" data-auth="${otpFor==="signup"?"signup":"forgot"}">Use a different email</button>`:""}
+    </div></form></div>`;
+  paintThemeBtn(); paintResend();
+  const f=a.querySelector("#aCode")||a.querySelector("input:not([value]),input[value='']")||a.querySelector("input"); if(f) setTimeout(()=>{ if(!a.contains(document.activeElement)) f.focus(); },30);
+}
+function showMsg(msg,kind){ const m=$("#authMsg"); if(!m){ showAuth(msg,kind); return; } m.className="auth-msg "+(kind||"err"); m.textContent=msg; m.hidden=false; m.style.animation="none"; void m.offsetWidth; m.style.animation=""; }
+const fail=m=>{ throw {message:m,mine:true}; };
+function hideAuth(){ const a=$("#auth"); a.hidden=true; a.innerHTML=""; document.body.classList.remove("locked"); }
+function paintResend(){ const b=$("#resendBtn"); if(!b) return; const left=Math.ceil((resendAt-Date.now())/1000);
+  if(left>0){ b.disabled=true; b.textContent="Resend in "+left+"s"; clearTimeout(resendTimer); resendTimer=setTimeout(paintResend,1000); } else { b.disabled=false; b.textContent="Resend code"; } }
+function goOtp(email,purpose,msg){ authEmail=email; otpFor=purpose; authMode="otp"; resendAt=Date.now()+60000; showAuth(msg||"",msg?"ok":undefined); }
+function authError(e){
+  const m=(e&&e.message)||String(e); if(e&&e.mine) return m;
+  if(/invalid login/i.test(m)) return "Wrong email or password.";
+  if(/already registered|already exists/i.test(m)) return "An account with this email already exists. Sign in instead.";
+  if(/expired|invalid.*(otp|token)|token.*(expired|invalid)/i.test(m)) return "That code is wrong or has expired. Check it, or tap Resend code.";
+  if(/rate limit|too many|security purposes/i.test(m)) return "Too many attempts. Please wait a minute and try again.";
+  if(/same.*password|different from the old/i.test(m)) return "The new password must be different from your old one.";
+  if(/weak|at least|password should/i.test(m)) return "Please choose a stronger password (at least 8 characters, mixing letters and numbers).";
+  if(/fetch|network|failed to fetch/i.test(m)) return "Can't reach the server. Check your internet connection.";
+  return m;
+}
+const val=id=>{const el=$(id);return el?el.value.trim():"";};
+document.addEventListener("click",async e=>{
+  const b=e.target.closest("[data-auth],[data-eye],[data-resend]"); if(!b) return;
+  if(b.dataset.eye!==undefined){ const i=$("#aPass"); const show=i.type==="password"; i.type=show?"text":"password"; b.textContent=show?"Hide":"Show"; return; }
+  if(b.dataset.resend!==undefined){ if(Date.now()<resendAt) return; b.disabled=true;
+    try{ const r=otpFor==="signup"?await sb.auth.resend({type:"signup",email:authEmail}):await sb.auth.resetPasswordForEmail(authEmail);
+      if(r.error) throw r.error; resendAt=Date.now()+60000; paintResend(); showMsg("A new code is on its way.","ok"); }
+    catch(err){ b.disabled=false; showMsg(authError(err)); } return; }
+  const em=val("#aEmail"); if(em) authEmail=em; authMode=b.dataset.auth; showAuth();
+});
+document.addEventListener("input",e=>{ if(e.target.id==="aCode"){ e.target.value=e.target.value.replace(/\D/g,""); if(e.target.value.length===6) $("#authForm").requestSubmit(); } });
+document.addEventListener("submit",async e=>{
+  if(e.target.id!=="authForm") return; e.preventDefault();
+  const email=val("#aEmail"), pass=($("#aPass")||{}).value||"", name=val("#aName"), code=val("#aCode");
+  const btn=$("#aGo"); if(btn.disabled) return; btn.disabled=true; btn.classList.add("busy");
+  try{
+    if(authMode==="signin"){ if(!email||!pass) fail("Enter your email and password.");
+      authEmail=email; const {error}=await sb.auth.signInWithPassword({email,password:pass});
+      if(error){ if(/not confirmed/i.test(error.message)){ await sb.auth.resend({type:"signup",email}); goOtp(email,"signup","Your email isn't verified yet. We've sent you a new code."); return; } throw error; } }
+    else if(authMode==="signup"){
+      if(!name) fail("Enter your name."); if(!/^\S+@\S+\.\S+$/.test(email)) fail("Enter a valid email address."); if(pass.length<8) fail("Password must be at least 8 characters.");
+      authEmail=email; const {data,error}=await sb.auth.signUp({email,password:pass,options:{data:{name}}}); if(error) throw error;
+      try{ localStorage.setItem("maang-pending-name",name); }catch(_){}
+      if(data.session) return;                                                               // email confirmation turned off in Supabase: already signed in
+      if(data.user&&Array.isArray(data.user.identities)&&data.user.identities.length===0) fail("An account with this email already exists. Sign in instead.");
+      goOtp(email,"signup"); return; }
+    else if(authMode==="forgot"){ if(!/^\S+@\S+\.\S+$/.test(email)) fail("Enter a valid email address.");
+      inRecovery=true; const {error}=await sb.auth.resetPasswordForEmail(email); if(error){ inRecovery=false; throw error; }
+      goOtp(email,"recovery"); return; }
+    else if(authMode==="otp"){ if(code.length<6) fail("Enter the 6-digit code from your email.");
+      if(otpFor==="recovery") inRecovery=true;
+      const {error}=await sb.auth.verifyOtp({email:authEmail,token:code,type:otpFor}); if(error) throw error;
+      if(otpFor==="recovery"){ authMode="newpass"; showAuth("Code verified. Now choose a new password.","ok"); }
+      return; }
+    else if(authMode==="newpass"){ if(pass.length<8) fail("Password must be at least 8 characters.");
+      const {error}=await sb.auth.updateUser({password:pass}); if(error) throw error;
+      inRecovery=false; const {data}=await sb.auth.getSession(); if(data.session) beginSession(data.session); flash("Password updated. You're signed in."); return; }
+  }catch(err){ showMsg(authError(err)); }
+  finally{ const b2=$("#aGo"); if(b2){ b2.disabled=false; b2.classList.remove("busy"); } }
+});
+let started=false;
+function beginSession(session){
+  if(started) return; started=true;
+  let pending=""; try{ pending=localStorage.getItem("maang-pending-name")||""; localStorage.removeItem("maang-pending-name"); }catch(_){}
+  startSession(session).then(()=>{ const nm=pending||(session.user.user_metadata&&session.user.user_metadata.name)||"";
+    if(nm&&(!S.name||S.name===(userEmail.split("@")[0]))){ S.name=nm; persist(); render(); }
+    startPresence(); if(isOwnerFlag) watchProgressLive(); paintOnline(); });
+}
+async function initAuth(){
+  paintThemeBtn();
+  if(!sb){ $("#auth").hidden=false; $("#auth").innerHTML=`<div class="auth-wrap"><div class="auth-card"><span class="brand-lg">MAANG Prep</span><p class="lead">Can't connect to the database. Check your internet connection, or <code>config.js</code> if you're the site owner.</p></div></div>`; return; }
+  sb.auth.onAuthStateChange((event,session)=>{
+    if(event==="PASSWORD_RECOVERY"){ inRecovery=true; authMode="newpass"; showAuth(); return; }
+    if(event==="SIGNED_OUT"){ started=false; return; }
+    if(session&&!inRecovery) setTimeout(()=>beginSession(session),0);
+  });
+  const {data}=await sb.auth.getSession();
+  if(!data.session) showAuth();
+}
+function exportProgress(){
+  const data=JSON.stringify({app:"maang-prep",exportedAt:new Date().toISOString(),progress:S},null,1);
+  try{ const url=URL.createObjectURL(new Blob([data],{type:"application/json"})); const a=document.createElement("a");
+    a.href=url; a.download="maang-prep-progress-"+new Date().toISOString().slice(0,10)+".json"; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),2000); flash("Backup downloaded."); }
+  catch(e){ const ta=$("#backupText"); if(ta){ ta.hidden=false; ta.value=data; ta.select(); flash("Copy this text and keep it somewhere safe."); } }
+}
+function importProgress(text){
+  try{ const j=JSON.parse(text); const p=normalize(j.progress||j);
+    S.done=Object.assign({},S.done,p.done); S.revise=Object.assign({},S.revise,p.revise);
+    for(const k in p.notes) if(!S.notes[k]) S.notes[k]=p.notes[k];
+    if(!S.name&&p.name) S.name=p.name; persist(); render(); flash("Progress imported.");
+  }catch(e){ flash("That file isn't a valid progress backup."); }
+}
+function flash(msg){ const f=$("#flash"); if(!f) return; f.textContent=msg; f.hidden=false; clearTimeout(flash.t); flash.t=setTimeout(()=>f.hidden=true,4000); }
+const isDone=id=>!!S.done[id], isRev=id=>!!S.revise[id];
+function toggleDone(id,v){ if(v===undefined) v=!isDone(id); if(v) S.done[id]=true; else delete S.done[id]; persist(); }
+function toggleRev(id){ if(isRev(id)) delete S.revise[id]; else S.revise[id]=true; persist(); }
+function trackStats(tr){ let n=0,d=0; for(const g of tr.groups||[]) for(const t of g.topics){n++; if(isDone(t.id)) d++;} return {n,d}; }
+
+/* ---------- routing ---------- */
+let current={view:"home"}, openTracks=new Set();
+function go(hash){ if(location.hash==="#"+hash) route(); else location.hash=hash; }
+function route(){
+  const h=decodeURIComponent(location.hash.slice(1));
+  if(!h||h==="home") current={view:"home"};
+  else if(h.startsWith("track-")) current={view:"track",id:h.slice(6)};
+  else if(h==="learners"){ current={view:"learners"}; if(isOwnerFlag) loadLearners(); }
+  else if(BY_ID.has(h)) { const t=BY_ID.get(h); current={view:"topic",id:h}; openTracks.add(t.track); if(!t.checklist&&S.last!==h){S.last=h;saveLocal();if(docRef){dirty=true;clearTimeout(saveTimer);saveTimer=setTimeout(flushRemote,900);}} }
+  else current={view:"home"};
+  $("#q").value=""; render(); trackPresence(); window.scrollTo(0,0); closeDrawer();
+}
+
+/* ---------- sidebar ---------- */
+function renderSide(){
+  const curTopic=current.view==="topic"?BY_ID.get(current.id):null;
+  const activeTrack=current.view==="track"?current.id:curTopic?curTopic.track:null;
+  $("#side").innerHTML=TRACKS.map(tr=>{
+    const st=trackStats(tr), open=openTracks.has(tr.id);
+    const groups=open&&tr.groups?`<div class="nav-groups">${tr.groups.map(g=>`<div class="nav-group"><div>${esc(g.name)}</div>${g.topics.map(t=>`<button class="nav-topic${curTopic&&curTopic.id===t.id?" current":""}" data-go="${t.checklist?"track-"+tr.id:t.id}"><span class="dot${isDone(t.id)?" done":""}${isRev(t.id)?" rev":""}"></span><span>${esc(t.title)}</span></button>`).join("")}</div>`).join("")}</div>`:"";
+    return `<div class="nav-track${activeTrack===tr.id?" active":""}" style="--tc:${TC[tr.id]||"var(--accent)"}"><button data-track="${tr.id}" aria-expanded="${open}"><span class="nt-name">${esc(tr.name)}</span><span class="nt-count">${tr.groups?st.d+"/"+st.n:"…"}</span><span class="nt-bar"><i style="width:${st.n?st.d/st.n*100:0}%"></i></span></button>${groups}</div>`;
+  }).join("")+(isOwnerFlag?`<div class="nav-track${current.view==="learners"?" active":""}" style="margin-top:10px;border-top:1px solid var(--line);padding-top:8px"><button data-go="learners"><span class="nt-name">Admin: all users</span><span class="nt-count">${LEARNERS?LEARNERS.length:"…"}</span></button></div>`:"");
+}
+
+/* ---------- views ---------- */
+function viewHome(){
+  let n=0,d=0; TRACKS.forEach(tr=>{const s=trackStats(tr);n+=s.n;d+=s.d});
+  const rev=Object.keys(S.revise).filter(k=>BY_ID.has(k)).map(k=>BY_ID.get(k));
+  const last=S.last&&BY_ID.get(S.last);
+  const nextUp=ORDER.find(t=>!isDone(t.id));
+  return `
+  <div class="hello"><div class="eyebrow">${new Date().getHours()<12?"Good morning":new Date().getHours()<17?"Good afternoon":"Good evening"}</div><h1 class="title">Hi, ${esc((S.name||"there").split(" ")[0])} 👋</h1>
+  <p class="lead">Every lesson for a backend SDE-2 switch: concepts, internals, real tech examples, interview questions with answers, tricky questions, and how to run each interview. Tick lessons as you finish them; flag the ones to revise.</p></div>
+  <div class="stat-row">
+    <div class="stat ring-stat"><div class="ring" style="--p:${n?Math.round(d/n*100):0}"><em>${n?Math.round(d/n*100):0}%</em></div><span>overall<br>complete</span></div>
+    <div class="stat"><b>${d}</b><span>of ${n} topics learned</span></div>
+    <div class="stat"><b>${rev.length}</b><span>marked to revise</span></div>
+  </div>
+  <div id="flash" class="flash" role="status" hidden></div>
+  ${isOwnerFlag?`<div class="card"><div class="h2">Admin: all users</div><p class="lead" style="margin-bottom:12px">${LEARNERS?`${LEARNERS.length} ${LEARNERS.length===1?"person is":"people are"} signed up. Only admins can see this.`:"Loading everyone's progress…"}</p><div class="actions"><button class="btn" data-go="learners">See everyone's progress</button></div></div>`:""}
+  ${last||nextUp?`<div class="card"><div class="h2">Pick up where you left off</div><div class="actions">
+    ${last?`<button class="btn" data-go="${last.id}">Continue: ${esc(last.title)}</button>`:""}
+    ${nextUp&&(!last||nextUp.id!==last.id)?`<button class="btn" data-go="${nextUp.id}">Next unlearned: ${esc(nextUp.title)}</button>`:""}</div></div>`:""}
+  <div class="card"><div class="h2">Tracks</div><div class="track-list">${TRACKS.map(tr=>{const s=trackStats(tr);return `<button class="tl-row" data-go="track-${tr.id}" style="--tc:${TC[tr.id]||"var(--accent)"}"><span class="tl-name">${esc(tr.name)}</span><span class="tl-pct">${s.d}/${s.n}</span><span class="tl-why">${esc(tr.why)}</span><span class="tl-bar"><i style="width:${s.n?s.d/s.n*100:0}%"></i></span></button>`}).join("")}</div></div>
+  <div class="card"><div class="h2">Marked to revise</div>${rev.length?`<ul class="mini-list">${rev.map(t=>`<li><button data-go="${t.checklist?"track-"+t.track:t.id}">${esc(t.title)}</button><small>${esc(TRACKS.find(x=>x.id===t.track).name)}</small></li>`).join("")}</ul>`:`<p class="empty">Nothing yet. Use "Revise later" on any lesson you want to come back to before interviews.</p>`}</div>
+  <div class="card"><div class="h2">Your profile and backups</div>
+    <div class="field"><label for="nick">Your name on the tracker</label><input id="nick" maxlength="40" placeholder="e.g. Akash" value="${esc(S.name||"")}"><small>Signed in as ${esc(userEmail)}</small></div>
+    <p class="sync-note account">Your progress is saved to your account and syncs across your devices. Closing the tab or browser doesn't reset it.</p>
+    <div class="actions"><button class="btn" data-act="export">Back up my progress</button><label class="btn" for="importFile">Restore from a backup</label><button class="btn" data-act="signout">Sign out</button><input type="file" id="importFile" accept=".json,application/json" hidden></div>
+    <textarea id="backupText" class="backup" readonly hidden aria-label="Progress backup text"></textarea>
+  </div>
+  <div class="card"><div class="h2">16-week plan</div><p class="lead" style="margin-bottom:12px">2–3 hrs on weekdays, 6–8 hrs on weekends. Phase tags (P1–P4) on every group match these weeks.</p><div class="plan">${PLAN.map(p=>`<div class="wk"><b>${p[0]} · ${p[1]}</b><p>${esc(p[2])}</p></div>`).join("")}</div></div>
+  <div class="card"><div class="h2">How each lesson is laid out</div><ul class="mini-list" style="color:var(--ink)">
+   <li>• <b>Core idea</b> and <b>how it works</b>: the concept and its internals.</li>
+   <li>• <b>Real-world example</b>: where it shows up in real systems, often your own projects.</li>
+   <li>• <b>Interview questions</b> and <b>tricky questions</b>: click a question to reveal the model answer. Try answering out loud first.</li>
+   <li>• <b>Interview simulation</b>: what to ask the interviewer before answering, and how to structure the answer.</li></ul></div>`;
+}
+function viewTrack(tr){
+  const s=trackStats(tr);
+  return `<div><div class="eyebrow"><button data-go="home">Home</button> › Track</div><h1 class="title">${esc(tr.name)}</h1><p class="lead">${esc(tr.why)}</p></div>
+  <div class="stat-row"><div class="stat"><b>${s.n?Math.round(s.d/s.n*100):0}%</b><span>${s.d} of ${s.n} done</span></div></div>
+  ${tr.groups.length?"":`<p class="empty">Lessons for this track are still being written. Check back shortly.</p>`}
+  ${tr.groups.map(g=>`<div class="group-block"><h3>${esc(g.name)} ${g.phase?`<span class="tag">${g.phase}</span>`:""}${g.must?'<span class="tag must">MUST</span>':""}</h3>
+   ${g.topics.map(t=>`<div class="topic-row${isDone(t.id)?" done":""}"><input type="checkbox" data-check="${t.id}" ${isDone(t.id)?"checked":""} aria-label="Mark ${esc(t.title)} done">${t.checklist?`<span style="flex:1;min-width:0">${esc(t.title)}</span>`:`<button data-go="${t.id}">${esc(t.title)}</button>`}${isRev(t.id)?'<span class="rv">revise</span>':""}</div>`).join("")}</div>`).join("")}`;
+}
+function viewTopic(t){
+  const tr=TRACKS.find(x=>x.id===t.track);
+  const i=ORDER.indexOf(t), prev=ORDER[i-1], next=ORDER[i+1];
+  if(!t.html) t.html=renderMarkdown(t.body);
+  const sections=t.body.filter(l=>l.startsWith("#### ")).map(l=>l.slice(5).trim());
+  return `<div><div class="eyebrow"><button data-go="home">Home</button> › <button data-go="track-${tr.id}">${esc(tr.name)}</button> › ${esc(t.group.name)} ${t.group.phase?`<span class="tag">${t.group.phase}</span>`:""}${t.group.must?'<span class="tag must">MUST</span>':""}</div>
+   <h1 class="title" style="margin-top:6px">${esc(t.title)}</h1></div>
+  <div class="actions"><button class="btn${isDone(t.id)?" on-done":""}" data-done="${t.id}">${isDone(t.id)?"✓ Learned":"Mark as learned"}</button><button class="btn${isRev(t.id)?" on-rev":""}" data-rev="${t.id}">${isRev(t.id)?"★ Revising":"Revise later"}</button></div>
+  ${sections.length>2?`<div class="toc">${sections.map((s,k)=>`<button data-sec="${k}">${esc(s)}</button>`).join("")}</div>`:""}
+  <article class="lesson" id="lesson">${t.html}</article>
+  <div class="card notes"><label for="note" class="h2" style="display:block">My notes</label><textarea id="note" data-note="${t.id}" placeholder="Your own summary, mistakes you made, follow-ups to look at…">${esc(S.notes[t.id]||"")}</textarea><small>Saved automatically.</small></div>
+  <div class="actions"><button class="btn${isDone(t.id)?" on-done":""}" data-done="${t.id}">${isDone(t.id)?"✓ Learned":"Mark as learned"}</button></div>
+  <div class="pager">${prev?`<button data-go="${prev.id}"><small>Previous</small><span>${esc(prev.title)}</span></button>`:"<span></span>"}${next?`<button class="next" data-go="${next.id}"><small>Next</small><span>${esc(next.title)}</span></button>`:"<span></span>"}</div>`;
+}
+function statsForDone(done){
+  let n=0,d=0; const per=TRACKS.map(tr=>{let tn=0,td=0; for(const g of tr.groups||[]) for(const t of g.topics){tn++; if(done[t.id]) td++;} n+=tn; d+=td; return {tr,tn,td};});
+  return {n,d,per};
+}
+function ago(ms){ if(!ms) return "never"; const s=(Date.now()-ms)/1000; if(s<90) return "just now"; if(s<3600) return Math.round(s/60)+" min ago"; if(s<86400) return Math.round(s/3600)+" h ago"; return Math.round(s/86400)+" days ago"; }
+function learnerName(l,i){ const n=l.name||(l.email?l.email.split("@")[0]:"")||("User "+(i+1)); return l.id===uid?n+" (you)":n; }
+function onlineCard(){
+  const ids=Object.keys(ONLINE); const by=new Map((LEARNERS||[]).map((l,i)=>[l.id,[l,i]]));
+  return `<div class="card"><div class="h2">Online now · ${ids.length}</div>${ids.length?`<ul class="online-list">${ids.map(id=>{const e=by.get(id); const nm=e?learnerName(e[0],e[1]):"New user"; const pg=ONLINE[id].page&&BY_ID.get(ONLINE[id].page);
+    return `<li><span class="avatar">${esc(nm.slice(0,1).toUpperCase())}</span><b>${esc(nm)}</b><small>${pg?"reading "+esc(pg.title):"browsing"}</small></li>`;}).join("")}</ul>`:`<p class="empty">Nobody is online right now.</p>`}</div>`;
+}
+
+function viewLearners(){
+  const head=`<div><div class="eyebrow"><button data-go="home">Home</button> › Admin</div><h1 class="title">All users</h1>`;
+  if(!isOwnerFlag) return head+`<p class="lead">Only admins can see this page.</p></div>`;
+  if(!LEARNERS) return head+`<p class="lead">Loading everyone's progress…</p></div>`;
+  const list=[...LEARNERS].sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+  return head+`<p class="lead">${LEARNERS.length} ${LEARNERS.length===1?"person has":"people have"} signed up. Each user sees only their own progress; personal notes stay private and aren't shown here.</p><div class="actions" style="margin-top:10px"><button class="btn" data-act="refresh">Refresh</button></div></div>
+  ${onlineCard()}
+  ${list.length?list.map((l,i)=>{const s=statsForDone(l.done); const cur=l.last&&BY_ID.get(l.last); const revN=Object.keys(l.revise).filter(k=>BY_ID.has(k)).length;
+    return `<div class="card learner"><div class="lr-head"><div><div class="h2" style="margin:0">${esc(learnerName(l,i))}${ONLINE[l.id]?`<span class="live-dot">online</span>`:""}</div>${l.email?`<div class="lr-email">${esc(l.email)}</div>`:""}<small>Last active ${ago(l.updatedAt)}</small></div><div class="lr-pct">${s.n?Math.round(s.d/s.n*100):0}%</div></div>
+      <div class="tl-bar"><i style="width:${s.n?s.d/s.n*100:0}%"></i></div>
+      <p class="lr-meta">${s.d} of ${s.n} topics learned · ${revN} marked to revise${cur?` · currently on <b>${esc(cur.title)}</b> (${esc(TRACKS.find(x=>x.id===cur.track).name)})`:""}</p>
+      <div class="lr-grid">${s.per.map(p=>`<div class="lr-row"><span>${esc(p.tr.name)}</span><span class="lr-bar"><i style="width:${p.tn?p.td/p.tn*100:0}%"></i></span><span class="lr-num">${p.td}/${p.tn}</span></div>`).join("")}</div></div>`;}).join("")
+  :`<p class="empty">Nobody has signed up yet. Share the site link; each person appears here after they create an account.</p>`}
+  <div class="card"><div class="h2">Adding people</div><ul class="mini-list" style="color:var(--ink)">
+   <li>• Send anyone the site link. They click "Create an account", and their progress appears here.</li>
+   <li>• To make someone else an admin, add their account in Supabase (see the README).</li></ul></div>`;
+}
+function viewSearch(q){
+  const term=q.toLowerCase(); const out=[];
+  for(const tr of TRACKS) for(const g of tr.groups||[]) for(const t of g.topics){
+    const inTitle=t.title.toLowerCase().includes(term);
+    let snip="";
+    if(!t.checklist){ const body=t.body.join(" "); const k=body.toLowerCase().indexOf(term);
+      if(k>=0){ snip=body.slice(Math.max(0,k-60),k+90).replace(/[#*`?>|]/g,""); } }
+    if(inTitle||snip) out.push({t,tr,snip,score:inTitle?0:1});
+  }
+  out.sort((a,b)=>a.score-b.score);
+  const hl=s=>esc(s).replace(new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"ig"),m=>`<mark>${m}</mark>`);
+  return `<div><div class="eyebrow">Search</div><h1 class="title">"${esc(q)}"</h1><p class="lead">${out.length} matching lesson${out.length===1?"":"s"}</p></div>
+  <div class="res">${out.slice(0,80).map(r=>`<button data-go="${r.t.checklist?"track-"+r.tr.id:r.t.id}"><b>${hl(r.t.title)}</b><small>${esc(r.tr.name)} · ${esc(r.t.group.name)}</small>${r.snip?`<small>…${hl(r.snip)}…</small>`:""}</button>`).join("")}</div>`;
+}
+function render(){
+  renderSide();
+  const v=$("#view"), q=$("#q").value.trim();
+  if(q.length>1){ v.innerHTML=viewSearch(q); return; }
+  if(current.view==="track"){ const tr=TRACKS.find(x=>x.id===current.id); v.innerHTML=tr&&tr.groups?viewTrack(tr):viewHome(); }
+  else if(current.view==="topic"){ const t=BY_ID.get(current.id); v.innerHTML=t?viewTopic(t):viewHome();
+    if(t&&window.hljs) v.querySelectorAll("pre code").forEach(el=>{try{hljs.highlightElement(el)}catch(e){}});
+    v.querySelectorAll(".lesson table").forEach(tb=>{if(!tb.parentElement.classList.contains("tbl")){const w=document.createElement("div");w.className="tbl";tb.replaceWith(w);w.appendChild(tb);}});
+  }
+  else if(current.view==="learners") v.innerHTML=viewLearners();
+  else v.innerHTML=viewHome();
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click",e=>{
+  const el=e.target.closest("[data-go],[data-track],[data-done],[data-rev],[data-sec],[data-act]"); if(!el) return;
+  if(el.dataset.act==="export"){ exportProgress(); return; }
+  if(el.dataset.act==="signout"){ signOut(); return; }
+  if(el.dataset.act==="refresh"){ loadLearners(); flash("Refreshed."); return; }
+  if(el.dataset.go){ go(el.dataset.go); return; }
+  if(el.dataset.track){ const id=el.dataset.track; if(openTracks.has(id)&&current.view==="track"&&current.id===id) openTracks.delete(id); else openTracks.add(id); go("track-"+id); return; }
+  if(el.dataset.done){ toggleDone(el.dataset.done); const y=window.scrollY; render(); window.scrollTo(0,y); return; }
+  if(el.dataset.rev){ toggleRev(el.dataset.rev); const y=window.scrollY; render(); window.scrollTo(0,y); return; }
+  if(el.dataset.sec!==undefined){ const h=document.querySelectorAll("#lesson h4")[+el.dataset.sec]; if(h) h.scrollIntoView({behavior:"smooth",block:"start"}); }
+});
+document.addEventListener("change",e=>{
+  if(e.target.dataset.check){ toggleDone(e.target.dataset.check,e.target.checked); render(); return; }
+  if(e.target.id==="importFile"&&e.target.files[0]){ const r=new FileReader(); r.onload=()=>importProgress(String(r.result)); r.readAsText(e.target.files[0]); e.target.value=""; return; }
+  if(e.target.id==="nick"){ S.name=e.target.value.trim().slice(0,40); persist(); flash("Name saved."); }
+});
+let noteTimer=null;
+document.addEventListener("input",e=>{
+  if(e.target.id==="q"){ render(); return; }
+  if(e.target.dataset.note){ const id=e.target.dataset.note,val=e.target.value; clearTimeout(noteTimer);
+    noteTimer=setTimeout(()=>{ if(val.trim()) S.notes[id]=val; else delete S.notes[id]; persist(); },700); }
+});
+window.addEventListener("hashchange",route);
+const side=$("#side"),mb=$("#menuBtn");
+function closeDrawer(){side.classList.remove("open");mb.setAttribute("aria-expanded","false")}
+mb.addEventListener("click",()=>{const o=side.classList.toggle("open");mb.setAttribute("aria-expanded",o)});
+$("#brand").addEventListener("click",()=>go("home"));
+
+/* ---------- boot ---------- */
+async function boot(){
+  initAuth();
+  TRACKS[0].groups=buildChecklist();
+  indexAll(); route();
+  await Promise.all(TRACKS.filter(t=>t.files).map(async tr=>{
+    const groups=[],seen=new Set();
+    for(const f of tr.files){
+      if(window.EMBEDDED_CONTENT&&window.EMBEDDED_CONTENT[f]){ parseFile(window.EMBEDDED_CONTENT[f],tr.id,groups,seen); continue; }
+      try{ const r=await fetch("content/"+f); if(r.ok) parseFile(await r.text(),tr.id,groups,seen); }catch(e){}
+    }
+    tr.groups=groups;
+  }));
+  indexAll(); route();
+}
+boot();
+</script>
+
+</body>
+</html>
