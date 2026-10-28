@@ -334,6 +334,27 @@ body.locked{overflow:hidden}
   .hello .lead{font-size:14.5px}
 }
 
+/* account menu */
+.user-menu{position:relative;flex:none}
+.avatar-btn{border:0;background:none;padding:0;cursor:pointer;border-radius:50%;display:grid}
+.avatar-btn .avatar{width:36px;height:36px;font-size:14px;box-shadow:0 0 0 2px var(--surface),0 0 0 4px color-mix(in srgb,var(--accent) 35%,transparent);transition:transform .15s}
+.avatar-btn:hover .avatar{transform:scale(1.06)}
+.menu-pop{position:absolute;right:0;top:calc(100% + 10px);width:260px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 16px 40px rgba(20,20,60,.18);padding:6px;z-index:40;animation:fadeUp .15s ease both}
+.menu-pop[hidden]{display:none}
+.mp-head{display:flex;gap:10px;align-items:center;padding:10px 10px 12px;border-bottom:1px solid var(--line);margin-bottom:4px;min-width:0}
+.mp-who{min-width:0;display:flex;flex-direction:column}
+.mp-who b{font-size:14.5px}
+.mp-who small{color:var(--muted);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.menu-pop button{display:flex;gap:10px;align-items:center;width:100%;background:none;border:0;padding:9px 10px;border-radius:9px;cursor:pointer;font-size:14px;text-align:left}
+.menu-pop button:hover{background:var(--sunk)}
+.menu-pop button span{width:20px;text-align:center}
+.menu-pop .danger{color:#d23b55}
+.mp-sep{height:1px;background:var(--line);margin:4px 6px}
+.check{display:inline-flex;gap:7px;align-items:center;font-size:14px;color:var(--muted);cursor:pointer;margin-right:auto}
+.check input{width:16px;height:16px;accent-color:var(--accent);margin:0}
+.auth-row{align-items:center}
+@media (max-width:520px){.top .theme-btn{display:none}}
+
 </style>
 </head>
 <body>
@@ -343,7 +364,8 @@ body.locked{overflow:hidden}
   <div class="search"><input type="search" id="q" placeholder="Search all lessons (e.g. volatile, Saga, idempotency)" aria-label="Search all lessons"></div>
   <span class="online" id="online" hidden title="People studying right now"><i></i><b>1</b><span>&nbsp;online</span></span>
   <span class="sync" id="sync">Loading…</span>
-  <button class="icon-btn" id="themeBtn" aria-label="Toggle theme"><span class="sun">☀️</span><span class="moon">🌙</span></button>
+  <button class="icon-btn theme-btn" id="themeBtn" aria-label="Toggle theme"><span class="sun">☀️</span><span class="moon">🌙</span></button>
+  <div class="user-menu" id="userMenu" hidden><button class="avatar-btn" id="avatarBtn" aria-haspopup="menu" aria-expanded="false" aria-label="Account menu"><span class="avatar" id="avatarInitial">?</span></button><div class="menu-pop" id="menuPop" role="menu" hidden></div></div>
 </header>
 <div class="shell">
   <aside id="side" aria-label="Topics"></aside>
@@ -455,7 +477,17 @@ function renderMarkdown(lines){
    Row-level security: each person reads/writes only their own row; admins (public.admins) can read every row.
    Browser storage is a per-account local mirror. */
 const CFG=window.SITE_CONFIG||{};
-const sb=(window.supabase&&CFG.supabaseUrl)?window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseKey):null;
+// "Remember me": the login session lives in localStorage (stays signed in after closing the browser)
+// or, when unticked, in sessionStorage (signed out when the tab/browser closes).
+const REM_KEY="maang-remember";
+function remembered(){ try{ return localStorage.getItem(REM_KEY)!=="0"; }catch(e){ return true; } }
+function setRemember(on){ try{ localStorage.setItem(REM_KEY,on?"1":"0"); }catch(e){} }
+const authStore={
+  getItem(k){ try{ const v=localStorage.getItem(k); return v!==null?v:sessionStorage.getItem(k); }catch(e){ return null; } },
+  setItem(k,v){ try{ if(remembered()){ localStorage.setItem(k,v); sessionStorage.removeItem(k); } else { sessionStorage.setItem(k,v); localStorage.removeItem(k); } }catch(e){} },
+  removeItem(k){ try{ localStorage.removeItem(k); sessionStorage.removeItem(k); }catch(e){} }
+};
+const sb=(window.supabase&&CFG.supabaseUrl)?window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseKey,{auth:{storage:authStore,persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
 let LKEY="maang-study-v2";
 let S={done:{},revise:{},notes:{},last:"",name:"",updatedAt:0};
 let uid=null,userEmail="",docRef=null,isOwnerFlag=false,syncMode="loading",saveTimer=null,saving=false,dirty=false;
@@ -551,8 +583,8 @@ function applyTheme(t){ const r=document.documentElement; if(t==="light"||t==="d
 function currentTheme(){ const t=document.documentElement.getAttribute("data-theme"); if(t) return t; return matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"; }
 try{ applyTheme(localStorage.getItem("maang-theme")); }catch(e){}
 function toggleTheme(){ const n=currentTheme()==="dark"?"light":"dark"; applyTheme(n); try{localStorage.setItem("maang-theme",n)}catch(e){} paintThemeBtn(); }
-function paintThemeBtn(){ const b=$("#themeBtn"); if(!b) return; const d=currentTheme()==="dark"; b.setAttribute("aria-label",d?"Switch to light mode":"Switch to dark mode"); b.dataset.mode=d?"dark":"light"; }
-document.addEventListener("click",e=>{ if(e.target.closest("#themeBtn")) toggleTheme(); });
+function paintThemeBtn(){ const d=currentTheme()==="dark"; document.querySelectorAll(".theme-btn").forEach(b=>{ b.setAttribute("aria-label",d?"Switch to light mode":"Switch to dark mode"); b.dataset.mode=d?"dark":"light"; }); }
+document.addEventListener("click",e=>{ if(e.target.closest(".theme-btn")) toggleTheme(); });
 
 /* ---------- sign-in, sign-up and password reset with emailed codes ---------- */
 let authMode="signin", authEmail="", otpFor="", inRecovery=false, resendAt=0, resendTimer=null;
@@ -569,13 +601,13 @@ function showAuth(msg,kind){
   const sub=authMode==="otp"?`We sent a code to <b>${esc(authEmail)}</b>. Enter it below to ${otpFor==="signup"?"finish creating your account":"reset your password"}.`:esc(T.s);
   a.innerHTML=`<div class="auth-wrap"><div class="auth-side" aria-hidden="true"><div class="auth-logo">M</div><h2>Crack the loop.</h2><p>Java · Spring · LLD · HLD · Code comprehension · 33 full mocks</p><div class="auth-chips"><span>Track progress</span><span>Revise lists</span><span>Mock interviews</span></div></div>
    <form class="auth-card" id="authForm" novalidate>
-    <div class="auth-top"><span class="brand-lg">MAANG Prep</span><button type="button" class="icon-btn" id="themeBtn" aria-label="Toggle theme"><span class="sun">☀️</span><span class="moon">🌙</span></button></div>
+    <div class="auth-top"><span class="brand-lg">MAANG Prep</span><button type="button" class="icon-btn theme-btn" aria-label="Toggle theme"><span class="sun">☀️</span><span class="moon">🌙</span></button></div>
     <h1 class="auth-title">${T.t}</h1><p class="lead auth-sub">${sub}</p>
     ${authMode==="signup"?`<div class="field"><label for="aName">Your name</label><input id="aName" autocomplete="name" maxlength="40" placeholder="e.g. Akash"></div>`:""}
     ${["signin","signup","forgot"].includes(authMode)?`<div class="field"><label for="aEmail">Email</label><input id="aEmail" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" value="${esc(authEmail)}"></div>`:""}
     ${authMode==="otp"?`<div class="field"><label for="aCode">6-digit code</label><input id="aCode" class="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="••••••"><small>The code expires in a few minutes. Check spam if you don't see it.</small></div>`:""}
     ${["signin","signup","newpass"].includes(authMode)?`<div class="field"><label for="aPass">${authMode==="newpass"?"New password":"Password"}</label><div class="pw"><input id="aPass" type="password" minlength="8" autocomplete="${authMode==="signin"?"current-password":"new-password"}" placeholder="${authMode==="signin"?"Your password":"At least 8 characters"}"><button type="button" class="pw-eye" data-eye aria-label="Show password">Show</button></div></div>`:""}
-    ${authMode==="signin"?`<div class="auth-row"><button type="button" class="link" data-auth="forgot">Forgot password?</button></div>`:""}
+    ${authMode==="signin"?`<div class="auth-row"><label class="check"><input type="checkbox" id="aRemember" ${remembered()?"checked":""}> Remember me</label><button type="button" class="link" data-auth="forgot">Forgot password?</button></div>`:""}
     <p class="auth-msg ${kind||"err"}" id="authMsg" role="alert" ${msg?"":"hidden"}>${esc(msg||"")}</p>
     <button class="btn primary" type="submit" id="aGo">${T.b}</button>
     <div class="auth-links">
@@ -621,11 +653,12 @@ document.addEventListener("submit",async e=>{
   const btn=$("#aGo"); if(btn.disabled) return; btn.disabled=true; btn.classList.add("busy");
   try{
     if(authMode==="signin"){ if(!email||!pass) fail("Enter your email and password.");
-      authEmail=email; const {error}=await sb.auth.signInWithPassword({email,password:pass});
+      authEmail=email; const rm=$("#aRemember"); setRemember(rm?rm.checked:true);
+      const {error}=await sb.auth.signInWithPassword({email,password:pass});
       if(error){ if(/not confirmed/i.test(error.message)){ await sb.auth.resend({type:"signup",email}); goOtp(email,"signup","Your email isn't verified yet. We've sent you a new code."); return; } throw error; } }
     else if(authMode==="signup"){
       if(!name) fail("Enter your name."); if(!/^\S+@\S+\.\S+$/.test(email)) fail("Enter a valid email address."); if(pass.length<8) fail("Password must be at least 8 characters.");
-      authEmail=email; const {data,error}=await sb.auth.signUp({email,password:pass,options:{data:{name}}}); if(error) throw error;
+      authEmail=email; setRemember(true); const {data,error}=await sb.auth.signUp({email,password:pass,options:{data:{name}}}); if(error) throw error;
       try{ localStorage.setItem("maang-pending-name",name); }catch(_){}
       if(data.session) return;                                                               // email confirmation turned off in Supabase: already signed in
       if(data.user&&Array.isArray(data.user.identities)&&data.user.identities.length===0) fail("An account with this email already exists. Sign in instead.");
@@ -663,6 +696,31 @@ async function initAuth(){
   const {data}=await sb.auth.getSession();
   if(!data.session) showAuth();
 }
+
+/* ---------- account menu (header) ---------- */
+function paintUser(){
+  const m=$("#userMenu"); if(!m) return; m.hidden=!uid; if(!uid) return;
+  const nm=S.name||(userEmail.split("@")[0])||"?"; $("#avatarInitial").textContent=nm.slice(0,1).toUpperCase();
+  $("#avatarBtn").title=nm+" · "+userEmail;
+}
+function openMenu(open){
+  const pop=$("#menuPop"), btn=$("#avatarBtn"); if(!pop) return;
+  if(open===undefined) open=pop.hidden;
+  if(open){ const nm=S.name||(userEmail.split("@")[0]); const dark=currentTheme()==="dark";
+    pop.innerHTML=`<div class="mp-head"><span class="avatar">${esc(nm.slice(0,1).toUpperCase())}</span><div class="mp-who"><b>${esc(nm)}</b><small>${esc(userEmail)}</small></div></div>
+      <button role="menuitem" data-go="home"><span>🏠</span>My progress</button>
+      ${isOwnerFlag?`<button role="menuitem" data-go="learners"><span>👥</span>Admin: all users</button>`:""}
+      <button role="menuitem" data-act="theme"><span>${dark?"☀️":"🌙"}</span>${dark?"Light mode":"Dark mode"}</button>
+      <button role="menuitem" data-act="export"><span>💾</span>Back up my progress</button>
+      <div class="mp-sep"></div>
+      <button role="menuitem" data-act="signout" class="danger"><span>↪</span>Sign out</button>`; }
+  pop.hidden=!open; btn.setAttribute("aria-expanded",String(open));
+}
+document.addEventListener("click",e=>{
+  if(e.target.closest("#avatarBtn")){ openMenu(); return; }
+  const pop=$("#menuPop"); if(pop&&!pop.hidden){ const item=e.target.closest("#menuPop [data-act='theme']"); if(item) toggleTheme(); if(!e.target.closest(".mp-head")) setTimeout(()=>openMenu(false),0); }
+});
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") openMenu(false); });
 function exportProgress(){
   const data=JSON.stringify({app:"maang-prep",exportedAt:new Date().toISOString(),progress:S},null,1);
   try{ const url=URL.createObjectURL(new Blob([data],{type:"application/json"})); const a=document.createElement("a");
@@ -717,7 +775,7 @@ function viewHome(){
   <div class="hello"><div class="eyebrow">${new Date().getHours()<12?"Good morning":new Date().getHours()<17?"Good afternoon":"Good evening"}</div><h1 class="title">Hi, ${esc((S.name||"there").split(" ")[0])} 👋</h1>
   <p class="lead">Every lesson for a backend SDE-2 switch: concepts, internals, real tech examples, interview questions with answers, tricky questions, and how to run each interview. Tick lessons as you finish them; flag the ones to revise.</p></div>
   <div class="stat-row">
-    <div class="stat ring-stat"><div class="ring" style="--p:${n?Math.round(d/n*100):0}"><em>${n?Math.round(d/n*100):0}%</em></div><span>overall<br>complete</span></div>
+    <div class="stat ring-stat"><div class="ring" style="--p:${n?Math.round(d/n*100):0}"><em>${n?Math.round(d/n*100):0}%</em></div><span>overall <br>complete</span></div>
     <div class="stat"><b>${d}</b><span>of ${n} topics learned</span></div>
     <div class="stat"><b>${rev.length}</b><span>marked to revise</span></div>
   </div>
@@ -817,6 +875,7 @@ function render(){
   }
   else if(current.view==="learners") v.innerHTML=viewLearners();
   else v.innerHTML=viewHome();
+  paintUser();
 }
 
 /* ---------- events ---------- */
